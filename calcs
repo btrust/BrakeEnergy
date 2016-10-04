@@ -1,0 +1,406 @@
+//USER INPUTS
+
+//Takeoff Brake Energy Limits (REFUSED TAKEOFF STOP) (5-25 Change 13)
+var towt:Double = 220;
+var tospd:Double = 40;
+var tooat:Double = 5;
+var topa:Double = 2;
+var togr:Double = -1;
+var towd:Double = 10;
+var toflaps:Double = 30;
+
+//Landing Brake Energy Limits (MAXIMUM EFFORT STOP) (5-26 Change 13)
+var landwt:Double = 220;
+var landspd:Double = 50;
+var landoat:Double = 25;
+var landpa:Double = 2;
+var landgr:Double = -1;
+var landwd:Double = 10;
+var landflaps:Double = 30;
+
+//Landing Brake Energy Limits (REDUCED EFFORT STOP) (5-27 Change 12)
+var reefwt:Double = 200;
+var reefdist:Double = 4;
+var reefspd:Double = 120;
+var reefoat:Double = 25;
+var reefpa:Double = 2;
+var reefflaps:Double = 30;
+
+//Landing Brake Energy Limits (BRAKE ENERGY CORRECTION FOR RUNWAY GRADE) (5-28 Change 12)
+var lrgcwt:Double = 175;
+var lrgcdist:Double = 6;
+var lrgcgr:Double = 1;
+
+
+//Output
+var toenergy:Double = 0.0;
+var landenergy:Double = 0.0;
+var reefenergy:Double = 0.0;
+var lrgcenergy:Double = 0.0;
+
+//********** Takeoff Brake Energy Limits **********
+
+
+//*** Takeoff Weight and Speed***
+let tospdTable40:[Double] = [0.000012288589590,0.002630679369890,1.311548430849140]
+let tospdTable60:[Double] = [0.000022616967183,0.007148916001457,2.424019440188810]
+let tospdTable80:[Double] = [0.000016967231686,0.023740551856859,2.480051313950720]
+let tospdTable100:[Double] = [0.000004155210174,0.047570103919341,2.016570167533550]
+let tospdTable120:[Double] = [-0.000019804571073,0.080299071876602,0.770808204731030]
+let tospdTable140:[Double] = [-0.000059177239229,0.123783716628517,-1.541967021907270]
+let tospdTable160:[Double] = [-0.000112547041967,0.177440017446165,-5.007287626053440]
+let tospdTable180:[Double] = [-0.000182352592991,0.241964507790700,-9.749902602295280]
+let tospdTable200:[Double] = [-0.000168068596627,0.273512239759172,-11.235207556681800]
+let tospdTable220:[Double] = [0.000059972596301,0.222621191635980,-4.883171199784400]
+
+//Function uses precalculated coefficients(tospdTableXX) for speeds 40-220(20 knot increments) builds a 2D polynomial
+func towtSpd(toweight: Double, tospdTable: [Double]) -> Double {
+    
+let toenergy:Double = pow(towt,2) * tospdTable[0] + (pow(towt,1) * tospdTable[1]) + tospdTable[2]
+    return toenergy
+}
+//Calculates "toenergy" for nearest high and low precalculated speeds.  The high and low calculated "toenergy"'s difference is made proportional to the difference in speed and added to the low precalclulated speed's energy.
+if tospd < 40 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable40)
+    var percentHilospd:Double = (tospd) / 40
+    toenergy = (diffHilospd * percentHilospd) + 0}
+else if
+    tospd >= 40 && tospd < 60 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable60) - towtSpd(toweight:towt, tospdTable: tospdTable40)
+    var percentHilospd:Double = (tospd - 40) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable40)}
+else if
+    tospd >= 60 && tospd < 80 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable80) - towtSpd(toweight:towt, tospdTable: tospdTable60)
+    var percentHilospd:Double = (tospd - 60) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable60)}
+else if
+    tospd >= 80 && tospd < 100 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable100) - towtSpd(toweight:towt, tospdTable: tospdTable80)
+    var percentHilospd:Double = (tospd - 80) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable80)}
+else if
+    tospd >= 100 && tospd < 120 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable120) - towtSpd(toweight:towt, tospdTable: tospdTable100)
+    var percentHilospd:Double = (tospd - 100) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable100)}
+else if
+    tospd >= 120 && tospd < 140 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable140) - towtSpd(toweight:towt, tospdTable: tospdTable120)
+    var percentHilospd:Double = (tospd - 120) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable120)}
+else if
+    tospd >= 140 && tospd < 160 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable160) - towtSpd(toweight:towt, tospdTable: tospdTable140)
+    var percentHilospd:Double = (tospd - 140) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable140)}
+else if
+    tospd >= 160 && tospd < 180 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable180) - towtSpd(toweight:towt, tospdTable: tospdTable160)
+    var percentHilospd:Double = (tospd - 160) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable160)}
+else if
+    tospd >= 180 && tospd < 200 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable200) - towtSpd(toweight:towt, tospdTable: tospdTable180)
+    var percentHilospd:Double = (tospd - 180) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable180)}
+else if
+    tospd >= 200 && tospd < 220 {
+    var diffHilospd:Double = towtSpd(toweight:towt, tospdTable: tospdTable220) - towtSpd(toweight:towt, tospdTable: tospdTable200)
+    var percentHilospd:Double = (tospd - 200) / 20
+    toenergy = (diffHilospd * percentHilospd) + towtSpd(toweight:towt, tospdTable: tospdTable200)}
+else if
+    tospd == 220 || tospd > 220 {
+    toenergy = towtSpd(toweight:towt, tospdTable: tospdTable220)}
+
+
+//*** Takeoff Outside Air Temperature(OAT) ***
+//Divides the calculations into positive and negative slopes to create linear equations.
+//Positive OATs require 3D polynomial equation to derive linear equation
+let toposoatTable:[Double] = [-0.000000400625549,0.000015550856849,0.003651615178321,0.0]
+//Negative OATs require linear equation to derive linear equation
+let tonegoatTable:Double = 0.003725628339141
+
+if tooat >= 0
+{
+    //Slope(1D) with 0 intercept
+    var toposoat1degree:Double = ((pow(tooat,3) * toposoatTable[0]) + (pow(tooat,2) * toposoatTable[1]) + (pow(tooat,1) * toposoatTable[2]) + toposoatTable[3])
+    //OAT energy adjustment
+    var tooatEadjust:Double = (toenergy * toposoat1degree)
+toenergy = toenergy + tooatEadjust
+}
+else if tooat < 0
+{
+    //Slope(1D) with 0 intercept
+    var tonegoat1degree:Double = (tonegoatTable * tooat)
+    //OAT energy adjustment
+    var tooatEadjust:Double = tonegoat1degree * toenergy
+toenergy = toenergy + tooatEadjust
+}
+
+
+//*** Takeoff Pressure Altitude ***
+//Pressure Altitude is modeled by a 2D polynomial.
+//2D of PA polynomial is a 2D polynomial w/ 0 intercept
+let topaTable2:[Double] = [0.000006295875244,-0.000005447932128]
+//1D of PA polynomial is 3D polynomial w/ 0 intercept
+let topaTable1:[Double] = [0.000019202538317, 0.000382153631052,0.034777205544]
+//Calculates 2D & 1D of PA polynomial
+var topa2degree:Double = (pow(topa,2) * topaTable2[0]) + (pow(topa,1) * topaTable2[1])
+var topa1degree:Double = (pow(topa,3) * topaTable1[0]) + (pow(topa,2) * topaTable1[1]) + (pow(topa,1) * topaTable1[2])
+//Calculates PA polynomial with "toenergy" to find energy adjustment
+var topaEadjust:Double = ((pow(toenergy,2) * topa2degree) + (pow(toenergy,1) * topa1degree))
+toenergy = toenergy + topaEadjust
+
+//*** Takeoff Grade ***
+//Takeoff grade is linear where slope is derived from 3D polynomial w/ 0 intercept
+let togradeTable:[Double] = [0.000042946492459,0.000807710634859,-0.028586359433818]
+//Calculates slope(1D) of GR polynomial
+var tograde1degree:Double = ((pow(togr,3) * togradeTable[0]) + (pow(togr,2) * togradeTable[1]) + (pow(togr,1) * togradeTable[2]))
+//Calculates GR polynomial with "toenergy" to find energy adjustment
+var togrEadjust:Double = toenergy * tograde1degree
+toenergy = toenergy + togrEadjust
+
+//*** Takeoff Wind*** (2D Polynomial)
+let towindTable2:[Double] = [-0.000000000004090,0.000000000212279,0.000000001855739,-0.000000159341173,-0.000000155398910,0.000011906526413]
+let towindTable1:[Double] = [0.000000000198477,-0.000000010829987,-0.000000067582488,0.000008127178535,-0.000005961866966,-0.003018253398389]
+//2D is derived from 6D Polynomial w/ 0 intercept
+var towind2degree:Double = ((pow(towd,6) * towindTable2[0]) + (pow(towd,5) * towindTable2[1]) + (pow(towd,4) * towindTable2[2]) + (pow(towd,3) * towindTable2[3]) + (pow(towd,2) * towindTable2[4]) + (pow(towd,1) * towindTable2[5]))
+//1D is derived from 6D Polynomial w/ 0 intercept
+var towind1degree:Double = ((pow(towd,6) * towindTable1[0]) + (pow(towd,5) * towindTable1[1]) + (pow(towd,4) * towindTable1[2]) + (pow(towd,3) * towindTable1[3]) + (pow(towd,2) * towindTable1[4]) + (pow(towd,1) * towindTable1[5]))
+var towdEadjust:Double = (pow(toenergy,2) * towind2degree) + (toenergy * towind1degree)
+toenergy = toenergy + towdEadjust
+
+//*** Takeoff Flaps ***
+//Takeoff flaps are linear with 2 linear equations to derive toflap slope(1D) and intercept(0D)
+let toflapsTable2:[Double] = [-0.001380779220779,0.027615584415584]
+let toflapsTable1:[Double] = [0.003386147186147,-0.067722943722944]
+//Two Linear equations to create the takeoff flaps equation
+var toflaps1degree:Double = ((toflapsTable2[0] * toflaps) + toflapsTable2[1])
+var toflaps0degree:Double = ((toflapsTable1[0] * toflaps) + toflapsTable1[1])
+//Calculates flaps with "toenergy" to find energy adjustment
+var toflapsEadjust:Double =  (toflaps1degree * toenergy) + toflaps0degree
+toenergy = toenergy + toflapsEadjust
+
+
+//********** Landing Brake Energy Limits(MAXIMUM EFFORT STOP) **********
+
+
+//*** Landing Weight and Speed ***
+let landspdTable200:[Double] = [-0.000001756326270,0.000957504010243,0.027943817070678]
+let landspdTable180:[Double] = [-0.000001235644049,0.000662740180268,0.046595064419343]
+let landspdTable160:[Double] = [-0.000000789881910,0.000413939510233,0.057575041570786]
+let landspdTable140:[Double] = [-0.000000382644129,0.000200602378922,0.062416284477955]
+let landspdTable120:[Double] = [-0.000000173419352,0.000091808578999,0.055237497754803]
+let landspdTable100:[Double] = [-0.000000099842653,0.000052791522037,0.041342081386642]
+let landspdTable80:[Double] = [-0.000000036254098,0.000019067432653,0.029255648744774]
+let landspdTable60:[Double] = [0.000000000105356,0.000000185825432,0.018189276426187]
+let landspdTable40:[Double] = [0.000000006283040,-0.000003150671217,0.008630599287594]
+
+//Function uses precalculated coefficients(landspdTableXX) for speeds 40-200(20 knot increments) builds a 3D polynomial with 0 intercept
+func landwtSpd(landweight: Double, landspdTable: [Double]) -> Double {
+    let landenergy:Double = (pow(landwt,3) * landspdTable[0]) + (pow(landwt,2) * landspdTable[1]) + (pow(landwt,1) * landspdTable[2])
+    return landenergy
+}
+//Calculates "landenergy" for nearest high and low precalculated speeds.  The high and low calculated "toenergy"'s difference is made proportional to the difference in speed and added to the low precalclulated speed's energy.
+if landspd < 40 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable40)
+    var percentHilospd:Double = (tospd) / 40
+    landenergy = diffHilospd * percentHilospd + 0}
+else if
+    landspd >= 40 && landspd < 60 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable60) - landwtSpd(landweight:landwt, landspdTable: landspdTable40)
+    var percentHilospd:Double = (landspd - 40) / 20
+    landenergy = (diffHilospd * percentHilospd) + landwtSpd(landweight:landwt, landspdTable: landspdTable40)}
+else if
+    landspd >= 60 && landspd < 80 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable80) - landwtSpd(landweight:landwt, landspdTable: landspdTable60)
+    var percentHilospd:Double = (landspd - 60) / 20
+    landenergy = (diffHilospd * percentHilospd) + landwtSpd(landweight:landwt, landspdTable: landspdTable60)}
+else if
+    landspd >= 80 && landspd < 100 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable100) - landwtSpd(landweight:landwt, landspdTable: landspdTable80)
+    var percentHilospd:Double = (landspd - 80) / 20
+    landenergy = (diffHilospd * percentHilospd) + landwtSpd(landweight:landwt, landspdTable: landspdTable80)}
+else if
+    landspd >= 100 && landspd < 120 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable120) - landwtSpd(landweight:landwt, landspdTable: landspdTable100)
+    var percentHilospd:Double = (landspd - 100) / 20
+    landenergy = (diffHilospd * percentHilospd) + landwtSpd(landweight:landwt, landspdTable: landspdTable100)}
+else if
+    landspd >= 120 && landspd < 140 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable140) - landwtSpd(landweight:landwt, landspdTable: landspdTable120)
+    var percentHilospd:Double = (landspd - 120) / 20
+    landenergy = (diffHilospd * percentHilospd) + landwtSpd(landweight:landwt, landspdTable: landspdTable120)}
+else if
+    landspd >= 140 && landspd < 160 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable160) - landwtSpd(landweight:landwt, landspdTable: landspdTable140)
+    var percentHilospd:Double = (landspd - 140) / 20
+    landenergy = (diffHilospd * percentHilospd) + landwtSpd(landweight:landwt, landspdTable: landspdTable140)}
+else if
+    landspd >= 160 && landspd < 180 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable180) - landwtSpd(landweight:landwt, landspdTable: landspdTable160)
+    var percentHilospd:Double = (landspd - 160) / 20
+    landenergy = (diffHilospd * percentHilospd) + landwtSpd(landweight:landwt, landspdTable: landspdTable160)}
+else if
+    landspd >= 180 && landspd < 200 {
+    var diffHilospd:Double = landwtSpd(landweight:landwt, landspdTable: landspdTable200) - landwtSpd(landweight:landwt, landspdTable: landspdTable180)
+    var percentHilospd:Double = (landspd - 180) / 20
+    landenergy = (diffHilospd * percentHilospd) + landwtSpd(landweight:landwt, landspdTable: landspdTable180)}
+else if
+    landspd == 200 || landspd > 200 {
+    landenergy = landwtSpd(landweight:landwt, landspdTable: landspdTable200)}
+
+
+//*** Landing Outside Air Temperature(OAT) ***
+//Landing OAT is a linear equation derived from a 3D polynomial
+let landoatTable:[Double] = [-0.000000007655117,0.000000701353735,0.003636908836016]
+//Calculates slope(1D) with no intercept
+var landoat1degree:Double = ((pow(landoat,3) * landoatTable[0]) + (pow(landoat,2) * landoatTable[1]) + (pow(landoat,1) * landoatTable[2]))
+//Calculates OAT with "landenergy" to find energy adjustment
+var landoatEadjust:Double = landenergy * landoat1degree
+toenergy = toenergy + togrEadjust
+
+
+//*** Landing Pressure Altitude(PA) ***
+//Landing Pressure Altitude is a linear equation derived from a 5D polynomial
+let landpaTable:[Double] = [-0.000000189896993,0.000006415319499,-0.000050047086511,0.000881537916079,0.035356301046392]
+//Calculates slope(1D) with no intercept
+var landpa1degree:Double = (pow(landpa,5) * landpaTable[0]) + (pow(landpa,4) * landpaTable[1]) + (pow(landpa,3) * landpaTable[2]) + (pow(landpa,2) * landpaTable[3]) + (pow(landpa,1) * landpaTable[4])
+//Calculates PA with "landenergy" to find energy adjustment
+var landpaEadjust = (landpa1degree * landenergy)
+landenergy = landenergy + landpaEadjust
+
+//*** Landing Flaps ***
+//Coefficients for flaps when land energy is >7.5
+let landflapsTable50:[Double] = [0,0,0,0]
+let landflapsTable40:[Double] = [-0.000001692254770,0.000154248290409,0.026004719755648,-0.046143548917643]
+let landflapsTable30:[Double] = [-0.000010162560751,0.001704849529555,0.006461020134576,0.193427863965635]
+let landflapsTable20:[Double] = [-0.000041859560918,0.003934719528838,-0.014258226196460,0.478998628168826]
+let landflapsTable0:[Double] = [-0.000053290552585,0.004085312334727,0.067493617167089,-0.261452062643120]
+//Coefficients for flaps when land energy is <= 7.5
+let landflapsTable2:[Double] = [0.000000019466667,-0.000000712000000,-0.000039786666667,0.000924800000003,0.020559999999961]
+let landflapsTable1:[Double] = [-0.000000278666667,0.000019713333333,-0.000227533333328,-0.001405333333390,-0.083400000000168]
+let landflapsTable00:[Double] = [0.000000575000000,-0.000044833333333,0.000817499999987,-0.002266666666542,0.080000000000662]
+
+var landflaps2degree = (pow(landflaps,4) * landflapsTable2[0]) + (pow(landflaps,3) * landflapsTable2[1]) + (pow(landflaps,2) * landflapsTable2[2]) + (pow(landflaps,1) * landflapsTable2[3]) + landflapsTable2[4]
+var landflaps1degree = (pow(landflaps,4) * landflapsTable1[0]) + (pow(landflaps,3) * landflapsTable1[1]) + (pow(landflaps,2) * landflapsTable1[2]) + (pow(landflaps,1) * landflapsTable1[3]) + landflapsTable1[4]
+var landflaps0degree = (pow(landflaps,4) * landflapsTable00[0]) + (pow(landflaps,3) * landflapsTable00[1]) + (pow(landflaps,2) * landflapsTable00[2]) + (pow(landflaps,1) * landflapsTable00[3]) + landflapsTable00[4]
+
+//Function uses precalculated coefficients(landflapsTableXX) for flaps 50-20(10 degree increments) builds a 3D polynomial with 0 intercept
+func landflapsDeg(energy: Double, landflapsTable: [Double]) -> Double {
+    let landflapenergy:Double = (pow(energy,3) * landflapsTable[0]) + (pow(energy,2) * landflapsTable[1]) + (pow(energy,1) * landflapsTable[2]) + landflapsTable[3]
+    return landflapenergy
+}
+
+//When "landenergy" is less than 7.5 a 4D polynomial is used to calculate energy adjustment. This causes a slight error when calculating 0 degree flaps for energies 7.5 to 10. Working to resolve. Error is < .2 energy.
+if landenergy <= 7.5 {
+    var landflapsEadjust:Double = (pow(landenergy,2) * landflaps2degree) + (pow(landenergy,1) * landflaps1degree) + landflaps0degree
+    landenergy = landenergy + landflapsEadjust}
+ //When "landenergy" is greater than 7.5 calculates "landenergy" adjustment for nearest high and low precalculated flap settings.  The high and low calculated "toenergy"'s difference is made proportional to the difference in speed and added to the low precalclulated degree's energy. FYI: flaps are inversely proportional to energy adjustment!!!
+if landenergy > 7.5 {
+    if landflaps == 50 {
+        var landflapsEadjust = landflapsDeg(energy:landenergy, landflapsTable: landflapsTable50)
+        landenergy = landenergy + landflapsEadjust
+    }
+   else if landflaps >= 40 && landflaps < 50 {
+        var diffHiloflaps:Double = landflapsDeg(energy:landenergy, landflapsTable:landflapsTable40) - landflapsDeg(energy:landenergy, landflapsTable:landflapsTable50)
+        var percHiloflaps:Double = (landflaps - 40) / 10
+        var landflapsEadjust = (diffHiloflaps * percHiloflaps)
+        landenergy = landenergy + (landflapsDeg(energy:landenergy, landflapsTable:landflapsTable40) - landflapsEadjust)
+    }
+    else if landflaps >= 30 && landflaps < 40 {
+        var diffHiloflaps:Double = landflapsDeg(energy:landenergy, landflapsTable:landflapsTable30) - landflapsDeg(energy:landenergy, landflapsTable:landflapsTable40)
+        var percHiloflaps:Double = (landflaps - 30) / 10
+        var landflapsEadjust = (diffHiloflaps * percHiloflaps)
+        landenergy = landenergy + (landflapsDeg(energy:landenergy, landflapsTable:landflapsTable30) - landflapsEadjust)
+    }
+    else if landflaps >= 20 && landflaps < 30 {
+        var diffHiloflaps:Double = landflapsDeg(energy:landenergy, landflapsTable:landflapsTable20) - landflapsDeg(energy:landenergy, landflapsTable:landflapsTable30)
+        var percHiloflaps:Double = (landflaps - 20) / 10
+        var landflapsEadjust = (diffHiloflaps * percHiloflaps)
+        landenergy = landenergy + (landflapsDeg(energy:landenergy, landflapsTable:landflapsTable20) - landflapsEadjust)
+    }
+    else if landflaps >= 0 && landflaps < 20 {
+        var diffHiloflaps:Double = landflapsDeg(energy:landenergy, landflapsTable:landflapsTable0) - landflapsDeg(energy:landenergy, landflapsTable:landflapsTable20)
+        var percHiloflaps:Double = (landflaps - 0) / 20
+        var landflapsEadjust = (diffHiloflaps * percHiloflaps)
+        //Land energy - this energy is then adjusted by the runway grade correction to obtain final energy.
+        landenergy = landenergy + (landflapsDeg(energy:landenergy, landflapsTable:landflapsTable0) - landflapsEadjust)
+    }
+}
+
+//********** Landing Brake Energy Limits(REDUCED EFFORT STOP) **********
+
+//*** Grossweight and Distance ***
+//3D polynomial with intercept derived from 4x6D polynomials
+let reefwtdistTable4:[Double] = [0.000000000025769,-0.000000000867388,0.000000010145262,-0.000000044773428,0.000000012822100,0.000000412670646,-0.000000149724447]
+let reefwtdistTable3:[Double] = [-0.000000020000111,0.000000654072074,-0.000007253064127,0.000027566166110,0.000024255320371,-0.000386840728533,0.000174433486713]
+let reefwtdistTable2:[Double] = [0.000004955745006,-0.000157454111751,0.001640275165244,-0.004921587563871,-0.015444347782022,0.117582463602503,-0.280706728172742]
+let reefwtdistTable1:[Double] = [-0.000383244654103,0.011730373463706,-0.110802676608728,0.174885577929672,2.175987974624150,-8.997444567503400,68.347252004488800]
+
+var reefwtdist3degree = (pow(reefdist,6) * reefwtdistTable4[0]) + (pow(reefdist,5) * reefwtdistTable4[1]) + (pow(reefdist,4) * reefwtdistTable4[2]) + (pow(reefdist,3) * reefwtdistTable4[3]) + (pow(reefdist,2) * reefwtdistTable4[4]) + (pow(reefdist,1) * reefwtdistTable4[5]) + reefwtdistTable4[6]
+
+var reefwtdist2degree = (pow(reefdist,6) * reefwtdistTable3[0]) + (pow(reefdist,5) * reefwtdistTable3[1]) + (pow(reefdist,4) * reefwtdistTable3[2]) + (pow(reefdist,3) * reefwtdistTable3[3]) + (pow(reefdist,2) * reefwtdistTable3[4]) + (pow(reefdist,1) * reefwtdistTable3[5]) + reefwtdistTable3[6]
+
+var reefwtdist1degree = (pow(reefdist,6) * reefwtdistTable2[0]) + (pow(reefdist,5) * reefwtdistTable2[1]) + (pow(reefdist,4) * reefwtdistTable2[2]) + (pow(reefdist,3) * reefwtdistTable2[3]) + (pow(reefdist,2) * reefwtdistTable2[4]) + (pow(reefdist,1) * reefwtdistTable2[5]) + reefwtdistTable2[6]
+
+var reefwtdist0degree = (pow(reefdist,6) * reefwtdistTable1[0]) + (pow(reefdist,5) * reefwtdistTable1[1]) + (pow(reefdist,4) * reefwtdistTable1[2]) + (pow(reefdist,3) * reefwtdistTable1[3]) + (pow(reefdist,2) * reefwtdistTable1[4]) + (pow(reefdist,1) * reefwtdistTable1[5]) + reefwtdistTable1[6]
+
+//Builds reference for next chart.  Reference value is 0-50
+var reefref1 = (pow(reefwt,3) * reefwtdist3degree) + (pow(reefwt,2) * reefwtdist2degree) + (pow(reefwt,1) * reefwtdist1degree) + reefwtdist0degree
+
+
+//*** Landing Speed ***
+//Linear equation with intercept derived from 2x4D polynomials
+let reefspdTable1:[Double] = [-0.000000007278678,0.000002560597783,-0.000538197775204,0.017418712709398,-0.309188945034428]
+let reefspdTable0:[Double] = [0.000000122873497,-0.000040989892482,0.016542686833950,-0.036285379023092,-0.167988254923230]
+
+var reefspd1degree:Double = (pow(reefspd,4) * reefspdTable1[0]) + (pow(reefspd,3) * reefspdTable1[1]) + (pow(reefspd,2) * reefspdTable1[2]) + (pow(reefspd,1) * reefspdTable1[3]) + reefspdTable1[4]
+var reefspd0degree:Double = (pow(reefspd,4) * reefspdTable0[0]) + (pow(reefspd,3) * reefspdTable0[1]) + (pow(reefspd,2) * reefspdTable0[2]) + (pow(reefspd,1) * reefspdTable0[3]) + reefspdTable0[4]
+//Builds reference2 to pass to pressure altitude
+var reefref2:Double = (pow(reefref1,1) * reefspd1degree) + reefspd0degree
+
+
+//*** Pressure Altitude ***
+//Linear equation with intercept derived from 3D polynomial with static intercept
+let reefpaTable1:[Double] = [-0.000005835032416,-0.000118176551604,-0.004619661597810,-0.115626286083917]
+let reefpaTable0:[Double] = [31.24]
+var reefpa1degree = (pow(reefpa,3) * reefpaTable1[0]) + (pow(reefpa,2) * reefpaTable1[1]) + (pow(reefpa,1) * reefpaTable1[2]) + reefpaTable1[3]
+//Builds reference3 to pass to OAT
+var reefref3:Double = (pow(reefref2,1) * reefpa1degree) + reefpaTable0[0]
+
+
+//*** Outside Air Temperature ***
+//Linear equation with intercept derived from x2 2D polynomial
+let reefoatTable1:[Double] = [-0.000003638444731,-0.004199900314775,-0.945021545093012]
+let reefoatTable0:[Double] = [0.000113870545844,0.131034998482697,29.501822165665900]
+
+var reefoat1degree = (pow(reefoat,2) * reefoatTable1[0]) + (pow(reefoat,1) * reefoatTable1[1]) + reefoatTable1[2]
+var reefoat0degree = (pow(reefoat,2) * reefoatTable0[0]) + (pow(reefoat,1) * reefoatTable0[1]) + reefoatTable0[2]
+//Output is actual energy - no reference needed
+reefenergy = (reefoat1degree * reefref3) + reefoat0degree
+
+//*** Flaps ***
+//Linear equation with 0 intercept derived from 2D polynomial.
+let reefflapsTable1:[Double] = [0.000091959410155,-0.011905962298576,1.365399589540970]
+
+var reefflaps1degree = (pow(reefflaps,2) * reefflapsTable1[0]) + (pow(reefflaps,1) * reefflapsTable1[1]) + reefflapsTable1[2]
+//Reduced Effort stop energy is output - this energy is then adjusted by the runway grade correction to obtain final energy.
+reefenergy = (reefflaps1degree * reefenergy)
+
+//********** Landing Brake Energy Correction for Runway Grade **********
+
+//*** Grossweight to Braking Distance ***
+
+var lrgcdistTable1:[Double] = [0.012503926054975]
+
+var lrgcdist1degree:Double = (pow(lrgcwt,1) * lrgcdistTable1[0])
+var lrgcref1 = (lrgcdist1degree * lrgcdist)
+
+//***Grade to Energy Adjustment ***
+var lrgcgrTable1:[Double] = [0.099765482837505]
+
+var lrgcgr1degree = (lrgcgrTable1[0] * lrgcgr)
+//Simply add to landenergy or reefenergy
+lrgcenergy = (lrgcgr1degree * lrgcref1)
